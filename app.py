@@ -46,7 +46,7 @@ def start(update, context):
                              text='Welcome! Now you will receive updates on coronavirus (nCov2019) every 30 seconds!')
 
     context.job_queue.run_repeating(
-        send_updates, 10, context=update.message.chat_id)
+        send_updates, interval=900, first=0, context=update.message.chat_id)
 
 
 def main():
