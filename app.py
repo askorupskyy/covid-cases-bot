@@ -67,6 +67,21 @@ class Bot:
         context.job_queue.run_repeating(
             self.send_updates, interval=3600, first=1, context=update.message.chat_id)
 
+    def client_help(self, update, context):
+        text = "<strong>Help</strong>\n\n"
+        text = text + "Commands: \n"
+        text = text + \
+            " - <code>/start</code> - starts the bot (15 minute interval).\n"
+        text = text + \
+            " - <code>/set_interval + time in seconds</code> - lets you set the interval on your own.\n"
+        text = text + " - <code>/stop</code> - stops sending the statistics.\n\n"
+
+        text = text + "Developed by <strong>rcbxd</strong> 😊\n"
+        text = text + "Read about the <a href=\"https://en.wikipedia.org/wiki/2019%E2%80%9320_Wuhan_coronavirus_outbreak\">coronavirus</a>."
+
+        context.bot.send_message(
+            chat_id=update.message.chat_id, text=text, parse_mode='HTML')
+
 
 '''
     def set_interval(self, update, context):
@@ -90,22 +105,6 @@ class Bot:
     def remove_job(self, context):
         context.job.stop()
 '''
-
-
-def client_help(self, update, context):
-    text = "<strong>Help</strong>\n\n"
-    text = text + "Commands: \n"
-    text = text + \
-        " - <code>/start</code> - starts the bot (15 minute interval).\n"
-    text = text + \
-        " - <code>/set_interval + time in seconds</code> - lets you set the interval on your own.\n"
-    text = text + " - <code>/stop</code> - stops sending the statistics.\n\n"
-
-    text = text + "Developed by <strong>rcbxd</strong> 😊\n"
-    text = text + "Read about the <a href=\"https://en.wikipedia.org/wiki/2019%E2%80%9320_Wuhan_coronavirus_outbreak\">coronavirus</a>."
-
-    context.bot.send_message(
-        chat_id=update.message.chat_id, text=text, parse_mode='HTML')
 
 
 '''
