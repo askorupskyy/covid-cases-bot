@@ -11,57 +11,102 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 # Command Handlers. Usually take two arguments: bot and update.
 
 
-def send_updates(context):
-    res = requests.get(
-        "https://bnonews.com/index.php/2020/02/the-latest-coronavirus-cases/")
-    soup = BeautifulSoup(res.content, "html.parser")
+class Bot:
+    def __init__(self):
+        self.job = None
+        updater = Updater(
+            token=config.TOKEN, use_context=True)
+        # Get dispatcher to register handlers
+        dispatcher = updater.dispatcher
+        # answer commands
+        dispatcher.add_handler(CommandHandler(
+            'set_interval', self.set_interval, pass_args=True))
+        dispatcher.add_handler(CommandHandler('help', self.client_help))
+        dispatcher.add_handler(CommandHandler('start', self.start))
+        dispatcher.add_handler(CommandHandler('stop', self.stop))
+        # start the bot
+        updater.start_polling()
+        # Stop
+        updater.idle()
 
-    table = soup.find_all("table")[0]
-    rows = table.find_all("tr")
-    row = rows[len(rows)-1]
+    def send_updates(self, context):
+        res = requests.get(
+            "https://bnonews.com/index.php/2020/02/the-latest-coronavirus-cases/")
+        soup = BeautifulSoup(res.content, "html.parser")
 
-    text = 'Latest updates on the <a href=\"https://en.wikipedia.org/wiki/2019%E2%80%9320_Wuhan_coronavirus_outbreak\">coronavirus</a> outbreak\n\n'
-    text = text + \
-        f'<code>China -> \t\t{row.find_all("strong")[1].get_text()}/{row.find_all("strong")[2].get_text()}\n'
+        table = soup.find_all("table")[0]
+        rows = table.find_all("tr")
+        row = rows[len(rows)-1]
 
-    table = soup.find_all("table")[2]
-    rows = table.find_all("tr")[1:-1]
+        text = 'Latest updates on the outbreak\n\n'
+        text = text + \
+            f'<code>China -> \t\t{row.find_all("strong")[1].get_text()}/{row.find_all("strong")[2].get_text()}\n'
 
-    for c in rows:
-        country = c.find_all("td")[0].get_text()
-        cases = c.find_all("td")[1].get_text()
-        dead = c.find_all("td")[2].get_text()
-        text = text + country + " -> \t\t"
-        text = text + cases + "/"
-        text = text + dead + "\n"
+        table = soup.find_all("table")[2]
+        rows = table.find_all("tr")[1:-1]
 
-    context.bot.send_message(
-        chat_id=context.job.context,
-        text=text + "</code>", parse_mode='HTML'
-    )
+        for c in rows:
+            country = c.find_all("td")[0].get_text()
+            cases = c.find_all("td")[1].get_text()
+            dead = c.find_all("td")[2].get_text()
+            text = text + country + " -> \t\t"
+            text = text + cases + "/"
+            text = text + dead + "\n"
 
+        context.bot.send_message(
+            chat_id=context.job.context,
+            text=text + "</code>", parse_mode='HTML'
+        )
 
-def start(update, context):
-    context.bot.send_message(chat_id=update.message.chat_id,
-                             text='Welcome! Now you will receive updates on coronavirus (nCov2019) every 30 seconds!')
+    def start(self, update, context):
+        context.bot.send_message(chat_id=update.message.chat_id,
+                                 text='Welcome! You initiated the Bot. Now you will be receiving the list of infected countries and the number of infected/dead people there.\nUse <code>/help</code> to look up commands.\nDeveloped by @rcbxd 😊',
+                                 parse_mode='HTML')
 
-    context.job_queue.run_repeating(
-        send_updates, interval=900, first=0, context=update.message.chat_id)
+        self.job = context.job_queue.run_repeating(
+            self.send_updates, interval=900, first=1, context=update.message.chat_id)
 
+    def set_interval(self, update, context):
+        if(self.job):
+            if (context.args):
+                self.job.schedule_removal()
+                self.job = context.job_queue.run_repeating(
+                    self.send_updates, interval=int(context.args[0]), first=1, context=update.message.chat_id)
+                context.bot.send_message(chat_id=update.message.chat_id,
+                                         text=f'You\'ve changed the job interval to {context.args[0]} seconds.')
+            else:
+                context.bot.send_message(chat_id=update.message.chat_id,
+                                         text='Please provide the interval in the following format: <code>/set_interval your_number_in_seconds</code>',
+                                         parse_mode='HTML')
+        else:
+            context.bot.send_message(chat_id=update.message.chat_id,
+                                     text='You need to start the bot first, run <code>/start</code> to do that.',
+                                     parse_mode='HTML')
 
-def main():
-    # Create updater and pass in Bot's auth key.
-    updater = Updater(
-        token=config.TOKEN, use_context=True)
-    # Get dispatcher to register handlers
-    dispatcher = updater.dispatcher
-    # answer commands
-    dispatcher.add_handler(CommandHandler('start', start))
-    # start the bot
-    updater.start_polling()
-    # Stop
-    updater.idle()
+    def client_help(self, update, context):
+        text = "<strong>Help</strong>\n\n"
+        text = text + "Commands: \n"
+        text = text + \
+            " - <code>/start</code> - starts the bot (15 minute interval).\n"
+        text = text + \
+            " - <code>/set_interval + time in seconds</code> - lets you set the interval on your own.\n"
+        text = text + " - <code>/stop</code> - stops sending the statistics.\n\n"
+
+        text = text + "Developed by <strong>rcbxd</strong> 😊\n"
+        text = text + "Read about the <a href=\"https://en.wikipedia.org/wiki/2019%E2%80%9320_Wuhan_coronavirus_outbreak\">coronavirus</a>."
+
+        context.bot.send_message(
+            chat_id=update.message.chat_id, text=text, parse_mode='HTML')
+
+    def stop(self, update, context):
+        if (self.job):
+            self.job = None
+            context.bot.send_message(chat_id=update.message.chat_id,
+                                     text="You've stopped the job. To start again, run either <code>/set_interval</code> or <code>/start</code>")
+        else:
+            context.bot.send_message(chat_id=update.message.chat_id, text='You need to start the bot first, run <code>/start</code> to do that.',
+                                     parse_mode='HTML')
 
 
 if __name__ == '__main__':
-    main()
+    Bot()
