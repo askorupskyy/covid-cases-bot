@@ -100,9 +100,9 @@ class Bot:
 
     def stop(self, update, context):
         if (self.job):
-            self.job = None
+            self.job.schedule_removal()
             context.bot.send_message(chat_id=update.message.chat_id,
-                                     text="You've stopped the job. To start again, run either <code>/set_interval</code> or <code>/start</code>")
+                                     text="You've stopped the job. To start again run either <code>/set_interval</code> or <code>/start</code>", parse_mode='HTML')
         else:
             context.bot.send_message(chat_id=update.message.chat_id, text='You need to start the bot first, run <code>/start</code> to do that.',
                                      parse_mode='HTML')
