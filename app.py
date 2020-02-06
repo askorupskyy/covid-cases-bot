@@ -3,6 +3,7 @@ import logging
 from bs4 import BeautifulSoup
 import requests
 import config
+import json
 
 # Logging
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -63,14 +64,17 @@ class Bot:
                                  text='Welcome! You initiated the Bot. Now you will be receiving the list of infected countries and the number of infected/dead people there.\nUse <code>/help</code> to look up commands.\nDeveloped by @rcbxd 😊',
                                  parse_mode='HTML')
 
-        self.job = context.job_queue.run_repeating(
-            self.send_updates, interval=900, first=1, context=update.message.chat_id)
+        context.job_queue.run_repeating(
+            self.send_updates, interval=3600, first=1, context=update.message.chat_id)
 
+
+'''
     def set_interval(self, update, context):
-        if(self.job):
+        if (context.job_queue):
             if (context.args):
-                self.job.schedule_removal()
-                self.job = context.job_queue.run_repeating(
+                context.job_queue.run_once(
+                    self.remove_job, 0.01, context=update.message.chat_id)
+                context.job_queue.run_repeating(
                     self.send_updates, interval=int(context.args[0]), first=1, context=update.message.chat_id)
                 context.bot.send_message(chat_id=update.message.chat_id,
                                          text=f'You\'ve changed the job interval to {context.args[0]} seconds.')
@@ -83,30 +87,38 @@ class Bot:
                                      text='You need to start the bot first, run <code>/start</code> to do that.',
                                      parse_mode='HTML')
 
-    def client_help(self, update, context):
-        text = "<strong>Help</strong>\n\n"
-        text = text + "Commands: \n"
-        text = text + \
-            " - <code>/start</code> - starts the bot (15 minute interval).\n"
-        text = text + \
-            " - <code>/set_interval + time in seconds</code> - lets you set the interval on your own.\n"
-        text = text + " - <code>/stop</code> - stops sending the statistics.\n\n"
+    def remove_job(self, context):
+        context.job.stop()
+'''
 
-        text = text + "Developed by <strong>rcbxd</strong> 😊\n"
-        text = text + "Read about the <a href=\"https://en.wikipedia.org/wiki/2019%E2%80%9320_Wuhan_coronavirus_outbreak\">coronavirus</a>."
 
-        context.bot.send_message(
-            chat_id=update.message.chat_id, text=text, parse_mode='HTML')
+def client_help(self, update, context):
+    text = "<strong>Help</strong>\n\n"
+    text = text + "Commands: \n"
+    text = text + \
+        " - <code>/start</code> - starts the bot (15 minute interval).\n"
+    text = text + \
+        " - <code>/set_interval + time in seconds</code> - lets you set the interval on your own.\n"
+    text = text + " - <code>/stop</code> - stops sending the statistics.\n\n"
 
+    text = text + "Developed by <strong>rcbxd</strong> 😊\n"
+    text = text + "Read about the <a href=\"https://en.wikipedia.org/wiki/2019%E2%80%9320_Wuhan_coronavirus_outbreak\">coronavirus</a>."
+
+    context.bot.send_message(
+        chat_id=update.message.chat_id, text=text, parse_mode='HTML')
+
+
+'''
     def stop(self, update, context):
-        if (self.job):
-            self.job.schedule_removal()
+        if (context.job_queue):
+            context.job_queue.run_once(
+                self.remove_job, 0, context=update.message.chat_id)
             context.bot.send_message(chat_id=update.message.chat_id,
                                      text="You've stopped the job. To start again run either <code>/set_interval</code> or <code>/start</code>", parse_mode='HTML')
         else:
             context.bot.send_message(chat_id=update.message.chat_id, text='You need to start the bot first, run <code>/start</code> to do that.',
                                      parse_mode='HTML')
-
+'''
 
 if __name__ == '__main__':
     Bot()
