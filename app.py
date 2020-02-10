@@ -22,7 +22,7 @@ class Bot:
         # answer commands
         # dispatcher.add_handler(CommandHandler(
         #    'set_interval', self.set_interval, pass_args=True))
-        dispatcher.add_handler(CommandHandler('help', self.client_help))
+        # dispatcher.add_handler(CommandHandler('help', self.client_help))
         dispatcher.add_handler(CommandHandler('start', self.start))
         #dispatcher.add_handler(CommandHandler('stop', self.stop))
         # start the bot
