@@ -61,12 +61,13 @@ class Bot:
 
     def start(self, update, context):
         context.bot.send_message(chat_id=update.message.chat_id,
-                                 text='Welcome! You initiated the Bot. Now you will be receiving the list of infected countries and the number of infected/dead people there.\nUse <code>/help</code> to look up commands.\nDeveloped by @rcbxd 😊',
+                                 text='Welcome! You initiated the Bot. Now you will be receiving the list of infected countries and the number of infected and dead people in them.\nUse <code>/help</code> to look up the available commands.\n',
                                  parse_mode='HTML')
 
         context.job_queue.run_repeating(
             self.send_updates, interval=3600, first=1, context=update.message.chat_id)
 
+    '''
     def client_help(self, update, context):
         text = "<strong>Help</strong>\n\n"
         text = text + "Commands: \n"
@@ -76,11 +77,11 @@ class Bot:
             " - <code>/set_interval + time in seconds</code> - lets you set the interval on your own.\n"
         text = text + " - <code>/stop</code> - stops sending the statistics.\n\n"
 
-        text = text + "Developed by <strong>rcbxd</strong> 😊\n"
         text = text + "Read about the <a href=\"https://en.wikipedia.org/wiki/2019%E2%80%9320_Wuhan_coronavirus_outbreak\">coronavirus</a>."
 
         context.bot.send_message(
             chat_id=update.message.chat_id, text=text, parse_mode='HTML')
+    '''
 
 
 '''
