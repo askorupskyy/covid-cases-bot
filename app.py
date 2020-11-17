@@ -4,6 +4,7 @@ from bs4 import BeautifulSoup
 import requests
 import config
 import json
+import time
 
 # Logging
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -20,11 +21,11 @@ class Bot:
         # Get dispatcher to register handlers
         dispatcher = updater.dispatcher
         # answer commands
-        # dispatcher.add_handler(CommandHandler(
-        #    'set_interval', self.set_interval, pass_args=True))
-        # dispatcher.add_handler(CommandHandler('help', self.client_help))
+        dispatcher.add_handler(CommandHandler(
+            'set_interval', self.set_interval, pass_args=True))
+        dispatcher.add_handler(CommandHandler('help', self.client_help))
         dispatcher.add_handler(CommandHandler('start', self.start))
-        #dispatcher.add_handler(CommandHandler('stop', self.stop))
+        dispatcher.add_handler(CommandHandler('stop', self.stop))
         # start the bot
         updater.start_polling()
         # Stop
@@ -32,26 +33,28 @@ class Bot:
 
     def send_updates(self, context):
         res = requests.get(
-            "https://bnonews.com/index.php/2020/02/the-latest-coronavirus-cases/")
+            "https://www.worldometers.info/coronavirus/")
         soup = BeautifulSoup(res.content, "html.parser")
-
+        time.sleep(10)
         table = soup.find_all("table")[0]
         rows = table.find_all("tr")
         row = rows[len(rows)-1]
 
         text = 'Latest updates on the outbreak\n\n'
-        text = text + \
-            f'<code>China -> \t\t{row.find_all("strong")[1].get_text()}/{row.find_all("strong")[2].get_text()}\n'
+        text = text + "<code>"
+        text = text + "Country -> Total Cases/New Cases/Total Dead\n"
 
         table = soup.find_all("table")[2]
-        rows = table.find_all("tr")[1:-1]
+        rows = table.find_all("tr")[8:28]
 
         for c in rows:
-            country = c.find_all("td")[0].get_text()
-            cases = c.find_all("td")[1].get_text()
-            dead = c.find_all("td")[2].get_text()
+            country = c.find_all("td")[1].get_text()
+            cases = c.find_all("td")[2].get_text()
+            new_cases = c.find_all("td")[3].get_text()
+            dead = c.find_all("td")[4].get_text()
             text = text + country + " -> \t\t"
             text = text + cases + "/"
+            text = text + new_cases + "/"
             text = text + dead + "\n"
 
         context.bot.send_message(
@@ -67,7 +70,6 @@ class Bot:
         context.job_queue.run_repeating(
             self.send_updates, interval=3600, first=1, context=update.message.chat_id)
 
-    '''
     def client_help(self, update, context):
         text = "<strong>Help</strong>\n\n"
         text = text + "Commands: \n"
@@ -81,10 +83,7 @@ class Bot:
 
         context.bot.send_message(
             chat_id=update.message.chat_id, text=text, parse_mode='HTML')
-    '''
 
-
-'''
     def set_interval(self, update, context):
         if (context.job_queue):
             if (context.args):
@@ -105,10 +104,7 @@ class Bot:
 
     def remove_job(self, context):
         context.job.stop()
-'''
 
-
-'''
     def stop(self, update, context):
         if (context.job_queue):
             context.job_queue.run_once(
@@ -118,7 +114,7 @@ class Bot:
         else:
             context.bot.send_message(chat_id=update.message.chat_id, text='You need to start the bot first, run <code>/start</code> to do that.',
                                      parse_mode='HTML')
-'''
+
 
 if __name__ == '__main__':
     Bot()
